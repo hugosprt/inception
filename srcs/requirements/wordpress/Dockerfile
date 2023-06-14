@@ -33,4 +33,6 @@ RUN chmod +x wp-cli.phar
 # move the file to the right folder
 RUN mv wp-cli.phar /usr/local/bin/wp
 
+COPY ./tools/auto-config.sh /auto-config.sh
+
 ENTRYPOINT ["bash", "auto-config.sh"]
