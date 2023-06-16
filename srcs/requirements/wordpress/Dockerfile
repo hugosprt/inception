@@ -1,37 +1,24 @@
-# Use the Debian Buster base image for this container
 FROM debian:buster
 
+RUN apt-get update
+RUN apt-get install curl \
+    php7.3 \
+    php7.3-fpm \
+    php7.3-cli \
+    php-mysql \
+    mariadb-client -y
 
-# ugrade and update apt
-RUN apt update -y
-RUN apt upgrade -y
+RUN mkdir -p /run/php/
+RUN chmod 777 /run/php
 
-
-# install wget to download wordpress
-RUN apt-get -y install wget
-
-# install php with the dependencies
-RUN apt-get install -y php7.3\
-	php-fpm\
-	php-mysql\
-	mariadb-client
-
-# install php with the dependencies
-RUN wget https://fr.wordpress.org/wordpress-6.0-fr_FR.tar.gz -P /var/www
-
-
-# unzip the tar and remove the zipped folder
-RUN cd /var/www && tar -xzf wordpress-6.0-fr_FR.tar.gz && rm wordpress-6.0-fr_FR.tar.gz
-
-# give root the rights to write in the folder
-RUN		chown -R root:root /var/www/wordpress
-
-# install CLI
-RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-#give the rights to move
-RUN chmod +x wp-cli.phar
-# move the file to the right folder
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 RUN mv wp-cli.phar /usr/local/bin/wp
+RUN chmod +x /usr/local/bin/wp
+RUN mkdir -p /var/www/wordpress
+
+COPY ./conf/wp-config.php /var/www/wordpress/wp-config.php
+RUN chmod -R 777 /var/www/wordpress/wp-config.php
+RUN chown -R www-data:www-data /var/www/wordpress/wp-config.php
 
 COPY ./tools/auto-config.sh /auto-config.sh
 
