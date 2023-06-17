@@ -1,25 +1,42 @@
+# Use the Debian Buster base image for this container
 FROM debian:buster
 
-RUN apt-get update
-RUN apt-get install curl \
-    php7.3 \
-    php7.3-fpm \
-    php7.3-cli \
-    php-mysql \
-    mariadb-client -y
+# Upgrade and update apt to fetch latest information about packages
+RUN apt update -y
+RUN apt upgrade -y
 
-RUN mkdir -p /run/php/
-RUN chmod 777 /run/php
+# Install wget to download wordpress
+RUN apt-get -y install wget
 
-RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+# Install php7.3 and the related dependencies needed to run WordPress
+RUN apt-get install -y php7.3\
+	php-fpm\
+	php-mysql\
+	mariadb-client
+
+# Download the latest WordPress version from the official WordPress website
+RUN wget https://fr.wordpress.org/wordpress-6.0-fr_FR.tar.gz -P /var/www
+
+# Uncompress the downloaded WordPress tar file and then remove the tar file to clean up space
+RUN cd /var/www && tar -xzf wordpress-6.0-fr_FR.tar.gz && rm wordpress-6.0-fr_FR.tar.gz
+
+# Copy the PHP-FPM configuration file to the appropriate directory
+COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d/www.conf
+
+# Change ownership of the WordPress directory to root
+RUN chown -R root:root /var/www/wordpress
+
+# Download WP-CLI, a command-line interface for WordPress 
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+
+# Set execute permissions on the downloaded WP-CLI Phar file
+RUN chmod +x wp-cli.phar
+
+# Move the WP-CLI Phar file to the /usr/local/bin directory to make it accessible system-wide
 RUN mv wp-cli.phar /usr/local/bin/wp
-RUN chmod +x /usr/local/bin/wp
-RUN mkdir -p /var/www/wordpress
 
-COPY ./conf/wp-config.php /var/www/wordpress/wp-config.php
-RUN chmod -R 777 /var/www/wordpress/wp-config.php
-RUN chown -R www-data:www-data /var/www/wordpress/wp-config.php
+# Copy the WordPress setup script into the container
+COPY ./tools/auto-config.sh auto-config.sh
 
-COPY ./tools/auto-config.sh /auto-config.sh
-
+# Set the entrypoint of the Docker image to the WordPress setup script
 ENTRYPOINT ["bash", "auto-config.sh"]

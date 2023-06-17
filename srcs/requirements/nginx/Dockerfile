@@ -14,6 +14,6 @@ RUN	openssl req \
 	-out /etc/ssl/certs/inception.crt \
 	-subj "/C=FR/ST=IDF/L=Paris/O=./OU=./CN=localhost/UID=hspriet"
 RUN mkdir -p /var/run/nginx
-RUN chmod 755 /var/www/html
-RUN chown -R www-data:www-data /var/www/html
+RUN chmod 755 /var/www/
+RUN chown -R www-data:www-data /var/www/
 CMD ["nginx", "-g", "daemon off;"]
